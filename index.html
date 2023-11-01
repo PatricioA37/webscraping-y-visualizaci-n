@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Histogram</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/papaparse/5.5.2/papaparse.min.js"></script>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+
+  <link rel="stylesheet" type="text/css" href="stylesheet.css">
+  
+</head>
+<body>
+  <input type="file" accept=".csv" id="picker">
+
+  <table id="tabla"></table>
+
+  <script>
+    document.getElementById('picker').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const csv = e.target.result;
+                const rows = csv.split('\n');
+                const table = document.getElementById('tabla');
+                table.innerHTML = '';
+
+                for (let i = 0; i < rows.length; i++) {
+                    const row = document.createElement('tr');
+                    const cells = rows[i].split(',');
+                    
+                    for (let j = 0; j < cells.length; j++) {
+                        const cell = (i === 0) ? document.createElement('th') : document.createElement('td');
+                        cell.textContent = cells[j];
+                        row.appendChild(cell);
+                    }
+
+                    table.appendChild(row);
+                }
+            };
+            reader.readAsText(file);
+        }
+    });
+</script>
+   
+  </script>
+    <div id="miVisualizacion">
+        <td>grafico Barras UTM</td>
+
+
+        <script>
+
+            // Seleccionar el elemento donde se mostrará la visualización
+                 const contenedor = d3.select("#miVisualizacion");
+
+                 // Cargar los datos desde el archivo CSV
+                    d3.csv("datos_limpios.csv")
+                     .then((datos) => {
+               
+
+                // Crear un gráfico de barras
+                const ancho = 600;
+                const alto = 400;
+                const margen = { superior: 30, derecho: 30, inferior: 30, izquierdo: 60 };
+                const anchoGrafico = ancho - margen.izquierdo - margen.derecho;
+                const altoGrafico = alto - margen.superior - margen.inferior;
+
+                const svg = contenedor
+                .append("svg")
+                .attr("width", ancho)
+                .attr("height", alto);
+
+                const grafico = svg
+                .append("g")
+                .attr("transform", `translate(${margen.izquierdo}, ${margen.superior})`);
+
+                // Escalar los datos para ajustarlos al tamaño del gráfico
+                const x = d3
+                .scaleBand()
+                .domain(datos.map((d) => d.Tiempo))
+                .range([0, anchoGrafico])
+                .padding(0.1);
+
+                const y = d3
+                .scaleLinear()
+                .domain([0, d3.max(datos, (d) => +d.Humedad)])
+                .nice()
+                .range([altoGrafico, 0]);
+
+                // Crear las barras del gráfico
+                grafico
+                .selectAll(".barra")
+                .data(datos)
+                .enter()
+                .append("rect")
+                .attr("class", "barra")
+                .attr("x", (d) => x(d.Tiempo))
+                .attr("y", (d) => y(+d.Humedad))
+                .attr("width", x.bandwidth())
+                .attr("height", (d) => altoGrafico - y(+d.Humedad));
+
+                // Agregar ejes x e y
+                const ejeX = d3.axisBottom(x);
+                const ejeY = d3.axisLeft(y);
+
+                grafico
+                .append("g")
+                .attr("class", "eje-x")
+                .attr("transform", `translate(0, ${altoGrafico})`)
+                .call(ejeX);
+
+                grafico
+                .append("g")
+                .attr("class", "eje-y")
+                .call(ejeY);
+
+
+
+
+            })
+            .catch((error) => {
+                console.error("Error al cargar los datos:", error);
+            });
+
+        </script>
+
+
+    </div>
+
+   
+
+
+
+
+</body>
+</html>
